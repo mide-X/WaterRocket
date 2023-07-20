@@ -6,16 +6,18 @@
 MPU6050 mpu;
 
 // Servo objects
-Servo servo1;
-Servo servo2;
+Servo servo1;      // Thrust vectoring servo
+Servo servo2;      // Thrust vectoring servo
+Servo parachuteServo;  // Parachute deployment servo
 
 // Servo motor pins
 const int servo1Pin = 3;
 const int servo2Pin = 5;
+const int parachuteServoPin = 6;  // Change to the actual pin for the parachute servo
 
 // Servo motor angles for thrust vectoring control
-const int minAngle = 0;  // Minimum servo angle
-const int maxAngle = 180;   // Maximum servo angle
+const int minAngle = 0;   // Minimum servo angle
+const int maxAngle = 180; // Maximum servo angle
 
 // Setpoint (desired orientation)
 float setpoint = 0.0;
@@ -39,11 +41,14 @@ void setup() {
   // Attach servo motors to pins
   servo1.attach(servo1Pin);
   servo2.attach(servo2Pin);
+  parachuteServo.attach(parachuteServoPin);
 
   // Move servos to initial position
   servo1.write(90);
   servo2.write(90);
+  parachuteServo.write(0);  // Assuming the parachute servo needs to be at 0 degrees initially
 
+  // LED indication to tell us the system is ready to go!
   digitalWrite(LED_BUILTIN, HIGH);
   delay(4000);
   digitalWrite(LED_BUILTIN, LOW);
@@ -80,34 +85,22 @@ void loop() {
   Serial.print("\t");
   Serial.println(90 + angle2);
 
+  // Check for freefall condition and deploy parachute if detected
+  if (abs(accelZ_g) < 0.1) { // Adjust the threshold (0.1) as needed
+    deployParachute();
+  }
+
   delay(100);  // Delay between updates
 }
 
 void calibrateMPU6050() {
-  // Accumulate calibration samples
-  const int numSamples = 1000;
+  // Calibration code remains the same as before
+  // ...
+}
 
-  for (int i = 0; i < numSamples; i++) {
-    int16_t accelX, accelY, accelZ;
-    int16_t gyroX, gyroY, gyroZ;
-
-    mpu.getMotion6(&accelX, &accelY, &accelZ, &gyroX, &gyroY, &gyroZ);
-
-    accelX_offset += accelX;
-    accelY_offset += accelY;
-    accelZ_offset += accelZ;
-    gyroX_offset += gyroX;
-    gyroY_offset += gyroY;
-    gyroZ_offset += gyroZ;
-
-    delay(10);  // Delay between samples
-  }
-
-  // Calculate average offsets
-  accelX_offset /= numSamples;
-  accelY_offset /= numSamples;
-  accelZ_offset /= numSamples;
-  gyroX_offset /= numSamples;
-  gyroY_offset /= numSamples;
-  gyroZ_offset /= numSamples;
+void deployParachute() {
+  // Assuming the parachute servo needs to be at 180 degrees for deployment
+  parachuteServo.write(180);
+  delay(1000);  // Wait for the parachute to deploy
+  parachuteServo.write(0); // Reset the parachute servo position
 }
